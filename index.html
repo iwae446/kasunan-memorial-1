@@ -12,7 +12,7 @@
       background: #f5f5f0;
       color: #333;
       min-height: 100vh;
-      font-size: 18px; /* ベースフォントサイズを大きく */
+      font-size: 18px;
     }
 
     header {
@@ -148,10 +148,10 @@
       margin-bottom: 10px;
     }
     .btn:active { transform: scale(0.98); }
-    .btn-primary { background: #639922; color: #fff; }
+    .btn-primary  { background: #639922; color: #fff; }
     .btn-primary:hover { opacity: 0.9; }
     .btn-secondary { background: #fff; color: #666; border: 1.5px solid #ddd; }
-    .btn-copy {
+    .btn-print {
       background: #3B6D11;
       color: #fff;
       display: flex;
@@ -185,8 +185,8 @@
       margin-bottom: 1.3rem;
       white-space: pre-wrap;
     }
-    .result-note { font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 1rem; }
-    .copied-msg { text-align: center; color: #639922; font-size: 0.9rem; margin-top: 8px; min-height: 22px; }
+
+    .copied-msg { text-align: center; color: #639922; font-size: 0.9rem; margin-bottom: 10px; min-height: 22px; }
 
     .error-box {
       background: #fff0f0;
@@ -202,6 +202,22 @@
 
     .screen { display: none; }
     .screen.active { display: block; }
+
+    /* 印刷用スタイル */
+    @media print {
+      header, .step-bar, .btn, .copied-msg, .q-number { display: none !important; }
+      body { background: #fff; font-size: 14pt; }
+      .container { padding: 0; max-width: 100%; }
+      .card { box-shadow: none; padding: 0; }
+      .result-box {
+        border: none;
+        background: #fff;
+        font-size: 14pt;
+        line-height: 2.2;
+        padding: 0;
+      }
+      #screen-result { display: block !important; }
+    }
   </style>
 </head>
 <body>
@@ -249,11 +265,9 @@
   <div id="screen-result" class="screen">
     <div class="card">
       <p class="q-number" style="margin-bottom:10px">✅ 文章ができました</p>
-      <p class="q-hint">以下の文章をコピーして、担当者にお送りください。</p>
       <div class="result-box" id="resultText"></div>
-      <p class="result-note">※ 内容を修正したい場合は担当者にご相談ください</p>
-      <button class="btn btn-copy" onclick="copyText()">📋 文章をコピーする</button>
       <p class="copied-msg" id="copiedMsg"></p>
+      <button class="btn btn-print" onclick="printText()">🖨️ 印刷する</button>
     </div>
     <button class="btn btn-secondary" onclick="restart()" style="margin-top:10px">🔄 最初からやり直す</button>
   </div>
@@ -273,7 +287,7 @@
 // ================================================
 // ★ GASのWebアプリURLをここに貼り付けてください
 // ================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwo8z92UbO1bGA9-b1rhqjy_ktRPtDZtFdZg1f9p-_ZCKelj-1xJohx-vXzRvZyxKDh/exec";
+const GAS_URL = "https://script.google.com/macros/s/ここにGASのIDを入れる/exec";
 
 // ================================================
 // 質問リスト
@@ -313,12 +327,14 @@ let currentStep = 0;
 const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
 
 // ================================================
-// 音声入力（待機時間を2倍に延長）
+// 音声入力（重複表示を修正・待機時間2倍）
 // ================================================
 let recognition = null;
 let isListening = false;
 let silenceTimer = null;
-const SILENCE_TIMEOUT = 6000; // 無音検知タイムアウト（通常の約2倍）
+let confirmedText = ""; // 確定済みテキストを別管理
+
+const SILENCE_TIMEOUT = 6000;
 
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -333,29 +349,33 @@ function initVoice() {
   recognition = new SpeechRecognition();
   recognition.lang = "ja-JP";
   recognition.interimResults = true;
-  recognition.continuous = true; // 自動停止せず話し続けられる
+  recognition.continuous = true;
 
   recognition.onresult = function(event) {
-    // 話している間はタイマーをリセット（無音検知を延長）
     clearTimeout(silenceTimer);
 
-    let interim = "";
-    let final = "";
+    let interimTranscript = "";
+
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) { final += transcript; }
-      else { interim += transcript; }
-    }
-    const textarea = document.getElementById("qAnswer");
-    if (final) {
-      const existing = textarea.value;
-      textarea.value = existing + (existing && !existing.endsWith("\n") ? "\n" : "") + final;
-    }
-    if (interim) {
-      document.getElementById("voiceStatus").textContent = "🎤 認識中：" + interim;
+      if (event.results[i].isFinal) {
+        // 確定テキストに追記
+        confirmedText += (confirmedText && !confirmedText.endsWith("\n") ? "\n" : "") + transcript;
+      } else {
+        interimTranscript += transcript;
+      }
     }
 
-    // 話し終わったあと SILENCE_TIMEOUT 後に自動停止
+    // テキストエリアは「確定済み＋認識中」を表示（重複しない）
+    const textarea = document.getElementById("qAnswer");
+    const baseText = answers[`q${currentStep + 1}`] || "";
+    const prefix = baseText ? baseText + (baseText.endsWith("\n") ? "" : "\n") : "";
+    textarea.value = prefix + confirmedText + interimTranscript;
+
+    if (interimTranscript) {
+      document.getElementById("voiceStatus").textContent = "🎤 認識中：" + interimTranscript;
+    }
+
     silenceTimer = setTimeout(() => {
       if (isListening) recognition.stop();
     }, SILENCE_TIMEOUT);
@@ -364,16 +384,24 @@ function initVoice() {
   recognition.onend = function() {
     clearTimeout(silenceTimer);
     isListening = false;
+
+    // 確定テキストをanswerに反映
+    const baseText = answers[`q${currentStep + 1}`] || "";
+    const prefix = baseText ? baseText + (baseText.endsWith("\n") ? "" : "\n") : "";
+    document.getElementById("qAnswer").value = prefix + confirmedText;
+
     document.getElementById("micBtn").classList.remove("recording");
     document.getElementById("qAnswer").classList.remove("listening");
     document.getElementById("voiceStatus").textContent = "🎤 マイクボタンで話して入力できます";
     document.getElementById("voiceStatus").className = "voice-status idle";
     document.getElementById("micBtn").textContent = "🎤";
+    confirmedText = "";
   };
 
   recognition.onerror = function(event) {
     clearTimeout(silenceTimer);
     isListening = false;
+    confirmedText = "";
     document.getElementById("micBtn").classList.remove("recording");
     document.getElementById("qAnswer").classList.remove("listening");
     document.getElementById("micBtn").textContent = "🎤";
@@ -393,8 +421,8 @@ function toggleVoice() {
   if (isListening) {
     clearTimeout(silenceTimer);
     recognition.stop();
-    isListening = false;
   } else {
+    confirmedText = ""; // 新しい録音開始時にリセット
     try {
       recognition.start();
       isListening = true;
@@ -404,7 +432,6 @@ function toggleVoice() {
       document.getElementById("voiceStatus").textContent = "🔴 録音中…話してください（終わったらボタンを押す）";
       document.getElementById("voiceStatus").className = "voice-status";
 
-      // 最初の無音タイマーをセット
       silenceTimer = setTimeout(() => {
         if (isListening) recognition.stop();
       }, SILENCE_TIMEOUT);
@@ -424,6 +451,7 @@ window.onload = function() {
 
 function showQuestion(index) {
   if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
+  confirmedText = "";
   const q = QUESTIONS[index];
   document.getElementById("qNumber").textContent  = `質問 ${index + 1} / ${QUESTIONS.length}`;
   document.getElementById("qText").textContent    = q.text;
@@ -462,7 +490,7 @@ function prevStep() {
 }
 
 // ================================================
-// 文章生成（fetch でGASを呼ぶ）
+// 文章生成
 // ================================================
 async function generateText() {
   showScreen("screen-loading");
@@ -476,7 +504,25 @@ async function generateText() {
     if (!response.ok) throw new Error(`通信エラー（${response.status}）`);
     const data = await response.json();
     if (data.error) throw new Error(data.error);
-    document.getElementById("resultText").textContent = data.text;
+
+    const text = data.text;
+    document.getElementById("resultText").textContent = text;
+
+    // クリップボードに自動コピー
+    try {
+      await navigator.clipboard.writeText(text);
+      document.getElementById("copiedMsg").textContent = "📋 クリップボードにコピーしました";
+    } catch(e) {
+      // フォールバック
+      const el = document.createElement("textarea");
+      el.value = text;
+      document.body.appendChild(el);
+      el.select();
+      document.execCommand("copy");
+      document.body.removeChild(el);
+      document.getElementById("copiedMsg").textContent = "📋 クリップボードにコピーしました";
+    }
+
     showScreen("screen-result");
   } catch (err) {
     document.getElementById("errorMsg").textContent =
@@ -486,27 +532,19 @@ async function generateText() {
 }
 
 // ================================================
-// コピー・リスタート
+// 印刷
 // ================================================
-function copyText() {
-  const text = document.getElementById("resultText").textContent;
-  navigator.clipboard.writeText(text).then(() => {
-    document.getElementById("copiedMsg").textContent = "✅ コピーしました！";
-    setTimeout(() => { document.getElementById("copiedMsg").textContent = ""; }, 3000);
-  }).catch(() => {
-    const el = document.createElement("textarea");
-    el.value = text;
-    document.body.appendChild(el);
-    el.select();
-    document.execCommand("copy");
-    document.body.removeChild(el);
-    document.getElementById("copiedMsg").textContent = "✅ コピーしました！";
-  });
+function printText() {
+  window.print();
 }
 
+// ================================================
+// リスタート
+// ================================================
 function restart() {
   currentStep = 0;
   Object.keys(answers).forEach(k => answers[k] = "");
+  confirmedText = "";
   showQuestion(0);
 }
 
@@ -520,4 +558,3 @@ function showScreen(id) {
 
 </body>
 </html>
-
