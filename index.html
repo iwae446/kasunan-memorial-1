@@ -110,7 +110,7 @@
         textarea::placeholder {
             color: #aaa;
         }
-        /* 聞き取り中：落ち着いたエンジ系に変更 */
+        /* 聞き取り中：落ち着いたエンジ系 */
         textarea.listening {
             border-color: #8A2323;
             background: #FAF0F0;
@@ -143,7 +143,7 @@
         .mic-btn:active {
             transform: scale(0.98);
         }
-        /* ボタン動作中：落ち着いた深みのあるエンジ色に変更 */
+        /* ボタン動作中：落ち着いたエンジ色 */
         .mic-btn.recording {
             background: #8A2323;
             animation: pulse-engie 1.5s ease-in-out infinite;
@@ -162,10 +162,10 @@
             font-size: 0.95rem;
             color: #8A2323; /* 文字もエンジ色に統一 */
             margin-top: 8px;
-            min-height: 48px; /* 2行分確保 */
+            min-height: 48px;
             text-align: center;
             font-weight: bold;
-            line-height: 1.5;
+            line-height: 1.6;
         }
         .voice-status.idle {
             color: #777;
@@ -377,7 +377,7 @@
     let silenceTimer = null;
     const SILENCE_TIMEOUT = 5000;
 
-    let finalSessionText = ""; // 録音中に確定したテキストをここにだけ溜める
+    let finalSessionText = ""; // 録音中に確定したテキストを溜める
 
     function initVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -413,11 +413,14 @@
                 finalSessionText += currentTurnFinal;
             }
 
-            // 【重要】上の枠（textarea）にはまだ書き込まない。
-            // 代わりに、ボタンの下のステータス欄にだけ現在聞こえている文字を表示する。
+            // 【重要】文字がダブるため上の入力枠（textarea）には直接書き込まない。
+            // ボタンの下にシニアの方が安心できる「エクスキューズ文」を大きく固定表示します。
             let showText = finalSessionText + interimTranscript;
             if (showText.trim() !== "") {
-                document.getElementById("voiceStatus").innerHTML = "👂 聞き取り中: " + showText + "<br><span style='font-size:0.85rem; font-weight:normal; color:#666;'>※できるだけ間をおかずに一気に話してください</span>";
+                document.getElementById("voiceStatus").innerHTML = 
+                    "できるだけ間をおかずに一気に話してください<br>" +
+                    "<span style='font-size:0.85rem; font-weight:normal; color:#666; display:block; margin-top:6px;'>" +
+                    "※画面に言葉がダブって表示されても、最後のAIがきれいに直します。気にせずそのまま続けて大丈夫です！</span>";
             }
 
             silenceTimer = setTimeout(() => {
@@ -431,7 +434,7 @@
 
             const textarea = document.getElementById("qAnswer");
             
-            // 録音が完全に終わった「ここ」で、初めて確定した文字を枠内に一括で流し込む
+            // 録音が終わった瞬間に一括反映
             if (finalSessionText.trim() !== "") {
                 const current = textarea.value.trim();
                 textarea.value = current ? current + "\n" + finalSessionText.trim() : finalSessionText.trim();
@@ -482,7 +485,12 @@
                 document.getElementById("micIcon").textContent = "👂";
                 document.getElementById("micText").textContent = "聞きとっています";
                 document.getElementById("qAnswer").classList.add("listening");
-                document.getElementById("voiceStatus").innerHTML = "お話を受付中です。<br>できるだけ間をおかずに一気に話してください";
+                
+                // 開始時に案内を出す
+                document.getElementById("voiceStatus").innerHTML = 
+                    "できるだけ間をおかずに一気に話してください<br>" +
+                    "<span style='font-size:0.85rem; font-weight:normal; color:#666; display:block; margin-top:6px;'>" +
+                    "※画面に言葉がダブって表示されても、最後のAIがきれいに直します。気にせずそのまま続けて大丈夫です！</span>";
                 document.getElementById("voiceStatus").className = "voice-status";
                 
                 silenceTimer = setTimeout(() => {
