@@ -62,7 +62,7 @@
             border-radius: 12px;
             padding: 1.5rem;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem; /* ボタンとの間隔を少し広げた */
+            margin-bottom: 1.5rem;
         }
         .q-number {
             font-size: 0.95rem;
@@ -71,14 +71,14 @@
             margin-bottom: 8px;
         }
         .q-text {
-            font-size: 1.2rem; /* 質問文をより大きく */
+            font-size: 1.2rem;
             font-weight: bold;
             line-height: 1.6;
             margin-bottom: 10px;
             color: #222;
         }
         .q-hint {
-            font-size: 0.95rem; /* ヒントを読みやすく */
+            font-size: 0.95rem;
             color: #666;
             margin-bottom: 16px;
             line-height: 1.6;
@@ -92,13 +92,13 @@
         }
         textarea {
             width: 100%;
-            border: 2px solid #ccc; /* 枠線を少し太く */
+            border: 2px solid #ccc;
             border-radius: 8px;
             padding: 14px;
-            font-size: 1.1rem; /* 入力文字・ placeholder を大きく */
+            font-size: 1.1rem;
             font-family: inherit;
             resize: vertical;
-            min-height: 140px; /* 枠を少し広げた */
+            min-height: 140px;
             line-height: 1.7;
             color: #333;
             transition: border-color 0.2s, background-color 0.2s;
@@ -110,10 +110,10 @@
         textarea::placeholder {
             color: #aaa;
         }
-        /* 聞き取り中：赤から「穏やかな黄緑・薄緑」に変更して怖さをなくしました */
+        /* 聞き取り中：落ち着いたエンジ系に変更 */
         textarea.listening {
-            border-color: #97C459;
-            background: #f4f9ee;
+            border-color: #8A2323;
+            background: #FAF0F0;
         }
         
         .mic-container {
@@ -143,28 +143,29 @@
         .mic-btn:active {
             transform: scale(0.98);
         }
-        /* ボタンが動いているときも、オレンジ〜若草色の優しいアニメーションに変更 */
+        /* ボタン動作中：落ち着いた深みのあるエンジ色に変更 */
         .mic-btn.recording {
-            background: #e67e22;
-            animation: pulse-green 1.5s ease-in-out infinite;
+            background: #8A2323;
+            animation: pulse-engie 1.5s ease-in-out infinite;
         }
         .mic-btn.unsupported {
             background: #bbb;
             cursor: not-allowed;
         }
-        @keyframes pulse-green {
-            0%   { box-shadow: 0 0 0 0 rgba(151,196,89,0.6); }
-            70%  { box-shadow: 0 0 0 14px rgba(151,196,89,0); }
-            100% { box-shadow: 0 0 0 0 rgba(151,196,89,0); }
+        @keyframes pulse-engie {
+            0%   { box-shadow: 0 0 0 0 rgba(138,35,35,0.4); }
+            70%  { box-shadow: 0 0 0 14px rgba(138,35,35,0); }
+            100% { box-shadow: 0 0 0 0 rgba(138,35,35,0); }
         }
         
         .voice-status {
             font-size: 0.95rem;
-            color: #e67e22; /* 赤からオレンジ色の優しい警告色へ */
+            color: #8A2323; /* 文字もエンジ色に統一 */
             margin-top: 8px;
-            min-height: 24px;
+            min-height: 48px; /* 2行分確保 */
             text-align: center;
             font-weight: bold;
+            line-height: 1.5;
         }
         .voice-status.idle {
             color: #777;
@@ -172,7 +173,7 @@
         }
         .voice-unsupported {
             font-size: 0.9rem;
-            color: #e67e22;
+            color: #8A2323;
             margin-top: 8px;
             text-align: center;
             display: none;
@@ -180,7 +181,7 @@
         .btn {
             display: block;
             width: 100%;
-            padding: 18px; /* ボタンを大きく押しやすく */
+            padding: 18px;
             border: none;
             border-radius: 12px;
             font-size: 1.15rem;
@@ -195,7 +196,7 @@
             transform: scale(0.98);
         }
         .btn-primary {
-            background: #3B6D11; /* 少し濃くして認識しやすく */
+            background: #3B6D11;
             color: #fff;
         }
         .btn-primary:hover {
@@ -245,7 +246,7 @@
             border: 2px solid #ddd;
             border-radius: 10px;
             padding: 1.5rem;
-            font-size: 1.15rem; /* 完成文章を大きく */
+            font-size: 1.15rem;
             line-height: 2.1;
             color: #222;
             margin-bottom: 1.5rem;
@@ -277,7 +278,6 @@
             display: block;
         }
         
-        /* 印刷用スタイル */
         @media print {
             header, .step-bar, .btn, .copied-msg, .q-number { display: none !important; }
             body { background: #fff; font-size: 16pt; }
@@ -356,14 +356,8 @@
     </div>
 
 <script>
-    // ================================================ //
-    // ★ GASのWebアプリURL
-    // ================================================ //
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwo8z92UbO1bGA9-b1rhqjy_ktRPtDZtFdZg1f9p-_ZCKelj-1xJohx-vXzRvZyxKDh/exec";
 
-    // ================================================ //
-    // 質問リスト
-    // ================================================ //
     const QUESTIONS = [
         { text: "公民館を使い始めたのはいつ頃ですか？また、きっかけは何でしたか？", hint: "ヒント：子どもが小さい頃から／友人に誘われて料理教室に参加したのが始まり、など", placeholder: "いつ頃のことや、きっかけを教えてください（おしゃべりするように話せばOKです）" },
         { text: "公民館でどんな活動や行事に参加しましたか？", hint: "ヒント：料理教室、囲碁サークル、子どものお遊戯会、防災訓練など", placeholder: "覚えている活動をいくつでも教えてください" },
@@ -372,22 +366,18 @@
         { text: "公民館へのメッセージ、または地域の未来へのひとことをお願いします。", hint: "ヒント：長い間ありがとう、これからも地域のきずなを大切に、など", placeholder: "感謝の気持ちや、これからの地域への願いを自由にどうぞ" }
     ];
 
-    // ================================================ //
-    // 状態管理
-    // ================================================ //
     let currentStep = 0;
     const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
 
     // ================================================ //
-    // 音声入力（リフレイン解消・シニア最適化版）
+    // 音声入力（完全後出し一括反映方式）
     // ================================================ //
     let recognition = null;
     let isListening = false;
     let silenceTimer = null;
-    const SILENCE_TIMEOUT = 5000; // 5秒間沈黙したら自動で区切る
+    const SILENCE_TIMEOUT = 5000;
 
-    let finalSessionText = ""; // 今回の録音ボタンON〜OFFまでに「確定」した文章をためる変数
-    let beforeText = "";       // ボタンを押した時点で元々テキストエリアに入っていた文字
+    let finalSessionText = ""; // 録音中に確定したテキストをここにだけ溜める
 
     function initVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -410,7 +400,6 @@
             let interimTranscript = "";
             let currentTurnFinal = "";
 
-            // 新しく入ってきた認識結果のみを処理する
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
@@ -420,23 +409,15 @@
                 }
             }
 
-            // 確定した文字をセッション変数にどんどん追記していく
             if (currentTurnFinal !== "") {
                 finalSessionText += currentTurnFinal;
             }
 
-            // テキストエリアの表示を更新（元々の文字 + 今回の確定分 + 今喋ってる未確定分）
-            const textarea = document.getElementById("qAnswer");
-            let displayText = finalSessionText + interimTranscript;
-            
-            if (displayText.trim() !== "") {
-                textarea.value = beforeText ? beforeText + "\n" + displayText.trim() : displayText.trim();
-            }
-
-            if (interimTranscript) {
-                document.getElementById("voiceStatus").textContent = "👂 声を聞き取っています…そのまま続けてくださいね";
-            } else {
-                document.getElementById("voiceStatus").textContent = "お話を受付中です。ゆっくりお話しください";
+            // 【重要】上の枠（textarea）にはまだ書き込まない。
+            // 代わりに、ボタンの下のステータス欄にだけ現在聞こえている文字を表示する。
+            let showText = finalSessionText + interimTranscript;
+            if (showText.trim() !== "") {
+                document.getElementById("voiceStatus").innerHTML = "👂 聞き取り中: " + showText + "<br><span style='font-size:0.85rem; font-weight:normal; color:#666;'>※できるだけ間をおかずに一気に話してください</span>";
             }
 
             silenceTimer = setTimeout(() => {
@@ -449,7 +430,11 @@
             isListening = false;
 
             const textarea = document.getElementById("qAnswer");
-            if (textarea.value.trim() !== "") {
+            
+            // 録音が完全に終わった「ここ」で、初めて確定した文字を枠内に一括で流し込む
+            if (finalSessionText.trim() !== "") {
+                const current = textarea.value.trim();
+                textarea.value = current ? current + "\n" + finalSessionText.trim() : finalSessionText.trim();
                 document.getElementById("voiceStatus").textContent = "✅ 入力しました！手で直すこともできますよ";
             } else {
                 document.getElementById("voiceStatus").textContent = "🎤 ボタンを押すと、声で入力できます";
@@ -462,7 +447,6 @@
             document.getElementById("micIcon").textContent = "🎤";
             document.getElementById("micText").textContent = "声で入力する";
             finalSessionText = "";
-            beforeText = "";
         };
 
         recognition.onerror = function(event) {
@@ -492,16 +476,13 @@
         } else {
             try {
                 finalSessionText = "";
-                // 話し始める前に、テキストエリアに元々あった文字を記憶しておく
-                beforeText = document.getElementById("qAnswer").value.trim();
-                
                 recognition.start();
                 isListening = true;
                 document.getElementById("micBtn").classList.add("recording");
-                document.getElementById("micIcon").textContent = "⏹";
-                document.getElementById("micText").textContent = "お話を終わりにする";
+                document.getElementById("micIcon").textContent = "👂";
+                document.getElementById("micText").textContent = "聞きとっています";
                 document.getElementById("qAnswer").classList.add("listening");
-                document.getElementById("voiceStatus").textContent = "お話を受付中です。ゆっくりお話しください";
+                document.getElementById("voiceStatus").innerHTML = "お話を受付中です。<br>できるだけ間をおかずに一気に話してください";
                 document.getElementById("voiceStatus").className = "voice-status";
                 
                 silenceTimer = setTimeout(() => {
@@ -572,9 +553,6 @@
         showQuestion(currentStep);
     }
 
-    // ================================================ //
-    // 文章生成
-    // ================================================ //
     async function generateText() {
         showScreen("screen-loading");
         try {
@@ -627,4 +605,5 @@
 </script>
 </body>
 </html>
+
 
