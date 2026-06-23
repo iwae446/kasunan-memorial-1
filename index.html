@@ -101,7 +101,7 @@
             min-height: 140px; /* 枠を少し広げた */
             line-height: 1.7;
             color: #333;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, background-color 0.2s;
         }
         textarea:focus {
             outline: none;
@@ -110,12 +110,12 @@
         textarea::placeholder {
             color: #aaa;
         }
+        /* 聞き取り中：赤から「穏やかな黄緑・薄緑」に変更して怖さをなくしました */
         textarea.listening {
-            border-color: #e74c3c;
-            background: #fff8f8;
+            border-color: #97C459;
+            background: #f4f9ee;
         }
         
-        /* シニア向け：マイクボタンを押しやすく、文字付きのエリアに変更 */
         .mic-container {
             display: flex;
             justify-content: center;
@@ -143,26 +143,27 @@
         .mic-btn:active {
             transform: scale(0.98);
         }
+        /* ボタンが動いているときも、オレンジ〜若草色の優しいアニメーションに変更 */
         .mic-btn.recording {
-            background: #e74c3c;
-            animation: pulse 1.2s ease-in-out infinite;
+            background: #e67e22;
+            animation: pulse-green 1.5s ease-in-out infinite;
         }
         .mic-btn.unsupported {
             background: #bbb;
             cursor: not-allowed;
         }
-        @keyframes pulse {
-            0%   { box-shadow: 0 0 0 0 rgba(231,76,60,0.5); }
-            70%  { box-shadow: 0 0 0 14px rgba(231,76,60,0); }
-            100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
+        @keyframes pulse-green {
+            0%   { box-shadow: 0 0 0 0 rgba(151,196,89,0.6); }
+            70%  { box-shadow: 0 0 0 14px rgba(151,196,89,0); }
+            100% { box-shadow: 0 0 0 0 rgba(151,196,89,0); }
         }
         
         .voice-status {
             font-size: 0.95rem;
-            color: #e74c3c;
+            color: #e67e22; /* 赤からオレンジ色の優しい警告色へ */
             margin-top: 8px;
             min-height: 24px;
-            text-align: center; /* 中央揃えで目立たせる */
+            text-align: center;
             font-weight: bold;
         }
         .voice-status.idle {
@@ -171,7 +172,7 @@
         }
         .voice-unsupported {
             font-size: 0.9rem;
-            color: #e74c3c;
+            color: #e67e22;
             margin-top: 8px;
             text-align: center;
             display: none;
@@ -378,14 +379,15 @@
     const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
 
     // ================================================ //
-    // 音声入力（Android 15 & シニア完全最適化版）
+    // 音声入力（リフレイン解消・シニア最適化版）
     // ================================================ //
     let recognition = null;
     let isListening = false;
     let silenceTimer = null;
     const SILENCE_TIMEOUT = 5000; // 5秒間沈黙したら自動で区切る
 
-    let recognitionText = ""; 
+    let finalSessionText = ""; // 今回の録音ボタンON〜OFFまでに「確定」した文章をためる変数
+    let beforeText = "";       // ボタンを押した時点で元々テキストエリアに入っていた文字
 
     function initVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -406,23 +408,35 @@
             clearTimeout(silenceTimer);
             
             let interimTranscript = "";
-            let finalTranscript = "";
+            let currentTurnFinal = "";
 
-            for (let i = 0; i < event.results.length; i++) {
+            // 新しく入ってきた認識結果のみを処理する
+            for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalTranscript += transcript;
+                    currentTurnFinal += transcript;
                 } else {
                     interimTranscript += transcript;
                 }
             }
 
-            recognitionText = finalTranscript + interimTranscript;
+            // 確定した文字をセッション変数にどんどん追記していく
+            if (currentTurnFinal !== "") {
+                finalSessionText += currentTurnFinal;
+            }
+
+            // テキストエリアの表示を更新（元々の文字 + 今回の確定分 + 今喋ってる未確定分）
+            const textarea = document.getElementById("qAnswer");
+            let displayText = finalSessionText + interimTranscript;
+            
+            if (displayText.trim() !== "") {
+                textarea.value = beforeText ? beforeText + "\n" + displayText.trim() : displayText.trim();
+            }
 
             if (interimTranscript) {
                 document.getElementById("voiceStatus").textContent = "👂 声を聞き取っています…そのまま続けてくださいね";
             } else {
-                document.getElementById("voiceStatus").textContent = "🔴 お話を受付中です。ゆっくりお話しください";
+                document.getElementById("voiceStatus").textContent = "お話を受付中です。ゆっくりお話しください";
             }
 
             silenceTimer = setTimeout(() => {
@@ -434,10 +448,8 @@
             clearTimeout(silenceTimer);
             isListening = false;
 
-            if (recognitionText.trim() !== "") {
-                const textarea = document.getElementById("qAnswer");
-                const current = textarea.value.trim();
-                textarea.value = current ? current + "\n" + recognitionText.trim() : recognitionText.trim();
+            const textarea = document.getElementById("qAnswer");
+            if (textarea.value.trim() !== "") {
                 document.getElementById("voiceStatus").textContent = "✅ 入力しました！手で直すこともできますよ";
             } else {
                 document.getElementById("voiceStatus").textContent = "🎤 ボタンを押すと、声で入力できます";
@@ -449,7 +461,8 @@
             document.getElementById("voiceStatus").className = "voice-status idle";
             document.getElementById("micIcon").textContent = "🎤";
             document.getElementById("micText").textContent = "声で入力する";
-            recognitionText = "";
+            finalSessionText = "";
+            beforeText = "";
         };
 
         recognition.onerror = function(event) {
@@ -478,14 +491,17 @@
             recognition.stop();
         } else {
             try {
-                recognitionText = "";
+                finalSessionText = "";
+                // 話し始める前に、テキストエリアに元々あった文字を記憶しておく
+                beforeText = document.getElementById("qAnswer").value.trim();
+                
                 recognition.start();
                 isListening = true;
                 document.getElementById("micBtn").classList.add("recording");
                 document.getElementById("micIcon").textContent = "⏹";
                 document.getElementById("micText").textContent = "お話を終わりにする";
                 document.getElementById("qAnswer").classList.add("listening");
-                document.getElementById("voiceStatus").textContent = "🔴 お話を受付中です。ゆっくりお話しください";
+                document.getElementById("voiceStatus").textContent = "お話を受付中です。ゆっくりお話しください";
                 document.getElementById("voiceStatus").className = "voice-status";
                 
                 silenceTimer = setTimeout(() => {
@@ -574,7 +590,6 @@
             const text = data.text;
             document.getElementById("resultText").textContent = text;
 
-            // クリップボードに自動コピー
             try {
                 await navigator.clipboard.writeText(text);
                 document.getElementById("copiedMsg").textContent = "📋 コピーしました。そのまま別の場所に貼り付けられます";
@@ -594,16 +609,10 @@
         }
     }
 
-    // ================================================ //
-    // 印刷
-    // ================================================ //
     function printText() {
         window.print();
     }
 
-    // ================================================ //
-    // リスタート
-    // ================================================ //
     function restart() {
         currentStep = 0;
         Object.keys(answers).forEach(k => answers[k] = "");
@@ -618,3 +627,4 @@
 </script>
 </body>
 </html>
+
