@@ -327,14 +327,13 @@ let currentStep = 0;
 const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
 
 // ================================================
-// 音声入力（重複表示を修正・待機時間2倍）
+// 音声入力（一区切りごと停止→再起動方式・重複なし）
 // ================================================
 let recognition = null;
 let isListening = false;
+let autoRestart = false;  // 自動再起動フラグ
 let silenceTimer = null;
-let confirmedText = ""; // 確定済みテキストを別管理
-
-const SILENCE_TIMEOUT = 6000;
+const SILENCE_TIMEOUT = 6000; // 無音タイムアウト（約6秒）
 
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -346,96 +345,131 @@ function initVoice() {
     return;
   }
 
-  recognition = new SpeechRecognition();
-  recognition.lang = "ja-JP";
-  recognition.interimResults = true;
-  recognition.continuous = true;
+  function createRecognition() {
+    const rec = new SpeechRecognition();
+    rec.lang = "ja-JP";
+    rec.interimResults = true;
+    rec.continuous = false; // 一区切りで自動停止（重複の原因をなくす）
 
-  recognition.onresult = function(event) {
-    clearTimeout(silenceTimer);
+    rec.onresult = function(event) {
+      clearTimeout(silenceTimer);
+      const textarea = document.getElementById("qAnswer");
+      let finalText = "";
+      let interimText = "";
 
-    let interimTranscript = "";
-
-    for (let i = event.resultIndex; i < event.results.length; i++) {
-      const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        // 確定テキストに追記
-        confirmedText += (confirmedText && !confirmedText.endsWith("\n") ? "\n" : "") + transcript;
-      } else {
-        interimTranscript += transcript;
+      for (let i = 0; i < event.results.length; i++) {
+        if (event.results[i].isFinal) {
+          finalText += event.results[i][0].transcript;
+        } else {
+          interimText += event.results[i][0].transcript;
+        }
       }
-    }
 
-    // テキストエリアは「確定済み＋認識中」を表示（重複しない）
-    const textarea = document.getElementById("qAnswer");
-    const baseText = answers[`q${currentStep + 1}`] || "";
-    const prefix = baseText ? baseText + (baseText.endsWith("\n") ? "" : "\n") : "";
-    textarea.value = prefix + confirmedText + interimTranscript;
+      // 確定テキストをテキストエリアに追記（現在の値に足す）
+      if (finalText) {
+        const current = textarea.value;
+        textarea.value = current + (current && !current.endsWith("\n") ? "\n" : "") + finalText;
+      }
 
-    if (interimTranscript) {
-      document.getElementById("voiceStatus").textContent = "🎤 認識中：" + interimTranscript;
-    }
+      // 認識中テキストはステータス表示のみ（テキストエリアには出さない）
+      if (interimText) {
+        document.getElementById("voiceStatus").textContent = "🎤 認識中：" + interimText;
+      }
 
-    silenceTimer = setTimeout(() => {
-      if (isListening) recognition.stop();
-    }, SILENCE_TIMEOUT);
-  };
+      // 話し終わったら再起動タイマーをセット
+      silenceTimer = setTimeout(() => {
+        if (autoRestart && recognition) {
+          try { recognition.stop(); } catch(e) {}
+        }
+      }, SILENCE_TIMEOUT);
+    };
 
-  recognition.onend = function() {
-    clearTimeout(silenceTimer);
-    isListening = false;
+    rec.onend = function() {
+      clearTimeout(silenceTimer);
+      if (autoRestart) {
+        // ユーザーがまだ話したいので自動再起動
+        try {
+          recognition = createRecognition();
+          recognition.start();
+          document.getElementById("voiceStatus").textContent = "🔴 録音中…話してください（終わったらボタンを押す）";
+        } catch(e) {
+          stopVoice();
+        }
+      } else {
+        stopVoice();
+      }
+    };
 
-    // 確定テキストをanswerに反映
-    const baseText = answers[`q${currentStep + 1}`] || "";
-    const prefix = baseText ? baseText + (baseText.endsWith("\n") ? "" : "\n") : "";
-    document.getElementById("qAnswer").value = prefix + confirmedText;
+    rec.onerror = function(event) {
+      clearTimeout(silenceTimer);
+      if (event.error === "no-speech" && autoRestart) {
+        // 無音エラーは無視して再起動
+        try {
+          recognition = createRecognition();
+          recognition.start();
+        } catch(e) {
+          stopVoice();
+        }
+        return;
+      }
+      autoRestart = false;
+      let msg = "🎤 マイクボタンで話して入力できます";
+      if (event.error === "not-allowed") {
+        msg = "⚠️ マイクの使用が許可されていません。ブラウザの設定をご確認ください";
+      }
+      document.getElementById("voiceStatus").textContent = msg;
+      document.getElementById("voiceStatus").className = "voice-status idle";
+      document.getElementById("micBtn").classList.remove("recording");
+      document.getElementById("qAnswer").classList.remove("listening");
+      document.getElementById("micBtn").textContent = "🎤";
+      isListening = false;
+    };
 
-    document.getElementById("micBtn").classList.remove("recording");
-    document.getElementById("qAnswer").classList.remove("listening");
-    document.getElementById("voiceStatus").textContent = "🎤 マイクボタンで話して入力できます";
-    document.getElementById("voiceStatus").className = "voice-status idle";
-    document.getElementById("micBtn").textContent = "🎤";
-    confirmedText = "";
-  };
+    return rec;
+  }
 
-  recognition.onerror = function(event) {
-    clearTimeout(silenceTimer);
-    isListening = false;
-    confirmedText = "";
-    document.getElementById("micBtn").classList.remove("recording");
-    document.getElementById("qAnswer").classList.remove("listening");
-    document.getElementById("micBtn").textContent = "🎤";
-    let msg = "🎤 マイクボタンで話して入力できます";
-    if (event.error === "not-allowed") {
-      msg = "⚠️ マイクの使用が許可されていません。ブラウザの設定をご確認ください";
-    } else if (event.error === "no-speech") {
-      msg = "声が聞こえませんでした。もう一度お試しください";
-    }
-    document.getElementById("voiceStatus").textContent = msg;
-    document.getElementById("voiceStatus").className = "voice-status idle";
-  };
+  // initVoice から createRecognition を呼んで初期化
+  recognition = { _factory: createRecognition };
+  recognition._factory = createRecognition;
+
+  // toggleVoice から使えるよう factory を保存
+  window._createRecognition = createRecognition;
+}
+
+function stopVoice() {
+  autoRestart = false;
+  isListening = false;
+  clearTimeout(silenceTimer);
+  document.getElementById("micBtn").classList.remove("recording");
+  document.getElementById("qAnswer").classList.remove("listening");
+  document.getElementById("voiceStatus").textContent = "🎤 マイクボタンで話して入力できます";
+  document.getElementById("voiceStatus").className = "voice-status idle";
+  document.getElementById("micBtn").textContent = "🎤";
 }
 
 function toggleVoice() {
-  if (!recognition) return;
+  if (!window._createRecognition) return;
+
   if (isListening) {
+    // 停止
+    autoRestart = false;
     clearTimeout(silenceTimer);
-    recognition.stop();
+    try { if (recognition && recognition.stop) recognition.stop(); } catch(e) {}
+    stopVoice();
   } else {
-    confirmedText = ""; // 新しい録音開始時にリセット
+    // 開始
+    autoRestart = true;
+    isListening = true;
+    recognition = window._createRecognition();
     try {
       recognition.start();
-      isListening = true;
       document.getElementById("micBtn").classList.add("recording");
       document.getElementById("micBtn").textContent = "⏹";
       document.getElementById("qAnswer").classList.add("listening");
       document.getElementById("voiceStatus").textContent = "🔴 録音中…話してください（終わったらボタンを押す）";
       document.getElementById("voiceStatus").className = "voice-status";
-
-      silenceTimer = setTimeout(() => {
-        if (isListening) recognition.stop();
-      }, SILENCE_TIMEOUT);
     } catch(e) {
+      stopVoice();
       document.getElementById("voiceStatus").textContent = "エラーが発生しました。再度お試しください";
     }
   }
@@ -450,8 +484,7 @@ window.onload = function() {
 };
 
 function showQuestion(index) {
-  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
-  confirmedText = "";
+  if (isListening) { autoRestart = false; clearTimeout(silenceTimer); try { if (recognition && recognition.stop) recognition.stop(); } catch(e) {} stopVoice(); }
   const q = QUESTIONS[index];
   document.getElementById("qNumber").textContent  = `質問 ${index + 1} / ${QUESTIONS.length}`;
   document.getElementById("qText").textContent    = q.text;
@@ -472,7 +505,7 @@ function updateStepBar(activeIndex) {
 }
 
 function nextStep() {
-  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
+  if (isListening) { autoRestart = false; clearTimeout(silenceTimer); try { if (recognition && recognition.stop) recognition.stop(); } catch(e) {} stopVoice(); }
   answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
   if (currentStep === QUESTIONS.length - 1) {
     generateText();
@@ -483,7 +516,7 @@ function nextStep() {
 }
 
 function prevStep() {
-  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
+  if (isListening) { autoRestart = false; clearTimeout(silenceTimer); try { if (recognition && recognition.stop) recognition.stop(); } catch(e) {} stopVoice(); }
   answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
   currentStep--;
   showQuestion(currentStep);
@@ -544,7 +577,6 @@ function printText() {
 function restart() {
   currentStep = 0;
   Object.keys(answers).forEach(k => answers[k] = "");
-  confirmedText = "";
   showQuestion(0);
 }
 
