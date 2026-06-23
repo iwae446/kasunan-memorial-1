@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>思い出を文章に｜公民館 閉館記念</title>
+  <title>思い出を文章にする</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -12,16 +12,17 @@
       background: #f5f5f0;
       color: #333;
       min-height: 100vh;
+      font-size: 18px; /* ベースフォントサイズを大きく */
     }
 
     header {
       background: #3B6D11;
       color: #EAF3DE;
-      padding: 1.2rem 1.5rem;
+      padding: 1.3rem 1.5rem;
       text-align: center;
     }
-    header h1 { font-size: 1.1rem; font-weight: bold; margin-bottom: 4px; }
-    header p  { font-size: 0.8rem; color: #C0DD97; }
+    header h1 { font-size: 1.2rem; font-weight: bold; margin-bottom: 4px; }
+    header p  { font-size: 0.85rem; color: #C0DD97; }
 
     .step-bar {
       display: flex;
@@ -32,7 +33,7 @@
     }
     .step-bar span {
       flex: 1;
-      height: 5px;
+      height: 6px;
       border-radius: 3px;
       background: #ddd;
       transition: background 0.3s;
@@ -49,71 +50,61 @@
     .card {
       background: #fff;
       border-radius: 12px;
-      padding: 1.4rem;
+      padding: 1.5rem;
       box-shadow: 0 1px 4px rgba(0,0,0,0.08);
       margin-bottom: 1rem;
     }
 
     .q-number {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       color: #639922;
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
     .q-text {
-      font-size: 1rem;
+      font-size: 1.1rem;
       font-weight: bold;
-      line-height: 1.5;
-      margin-bottom: 6px;
+      line-height: 1.6;
+      margin-bottom: 8px;
       color: #222;
     }
     .q-hint {
-      font-size: 0.8rem;
+      font-size: 0.88rem;
       color: #888;
-      margin-bottom: 12px;
-      line-height: 1.4;
+      margin-bottom: 14px;
+      line-height: 1.5;
     }
 
-    /* テキストエリアとマイクボタンのラッパー */
-    .textarea-wrap {
-      position: relative;
-    }
+    .textarea-wrap { position: relative; }
 
     textarea {
       width: 100%;
       border: 1.5px solid #ddd;
       border-radius: 8px;
-      padding: 10px 12px 48px 12px;
-      font-size: 0.95rem;
+      padding: 12px 14px 54px 14px;
+      font-size: 1rem;
       font-family: inherit;
       resize: vertical;
-      min-height: 110px;
-      line-height: 1.6;
+      min-height: 120px;
+      line-height: 1.7;
       color: #333;
       transition: border-color 0.2s;
     }
-    textarea:focus {
-      outline: none;
-      border-color: #639922;
-    }
+    textarea:focus { outline: none; border-color: #639922; }
     textarea::placeholder { color: #bbb; }
-    textarea.listening {
-      border-color: #e74c3c;
-      background: #fff8f8;
-    }
+    textarea.listening { border-color: #e74c3c; background: #fff8f8; }
 
-    /* マイクボタン */
     .mic-btn {
       position: absolute;
       bottom: 10px;
       right: 10px;
-      width: 44px;
-      height: 44px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
       border: none;
       background: #639922;
       color: #fff;
-      font-size: 1.2rem;
+      font-size: 1.4rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -126,41 +117,30 @@
       background: #e74c3c;
       animation: pulse 1s ease-in-out infinite;
     }
-    .mic-btn.unsupported {
-      background: #bbb;
-      cursor: not-allowed;
-    }
+    .mic-btn.unsupported { background: #bbb; cursor: not-allowed; }
     @keyframes pulse {
       0%   { box-shadow: 0 0 0 0 rgba(231,76,60,0.5); }
-      70%  { box-shadow: 0 0 0 10px rgba(231,76,60,0); }
+      70%  { box-shadow: 0 0 0 12px rgba(231,76,60,0); }
       100% { box-shadow: 0 0 0 0 rgba(231,76,60,0); }
     }
 
-    /* 音声認識ステータス */
     .voice-status {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: #e74c3c;
-      margin-top: 5px;
-      min-height: 18px;
+      margin-top: 6px;
+      min-height: 20px;
       text-align: right;
     }
     .voice-status.idle { color: #aaa; }
-
-    /* 音声非対応メッセージ */
-    .voice-unsupported {
-      font-size: 0.78rem;
-      color: #aaa;
-      margin-top: 5px;
-      display: none;
-    }
+    .voice-unsupported { font-size: 0.85rem; color: #aaa; margin-top: 6px; display: none; }
 
     .btn {
       display: block;
       width: 100%;
-      padding: 14px;
+      padding: 16px;
       border: none;
       border-radius: 10px;
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-family: inherit;
       font-weight: bold;
       cursor: pointer;
@@ -170,11 +150,7 @@
     .btn:active { transform: scale(0.98); }
     .btn-primary { background: #639922; color: #fff; }
     .btn-primary:hover { opacity: 0.9; }
-    .btn-secondary {
-      background: #fff;
-      color: #666;
-      border: 1.5px solid #ddd;
-    }
+    .btn-secondary { background: #fff; color: #666; border: 1.5px solid #ddd; }
     .btn-copy {
       background: #3B6D11;
       color: #fff;
@@ -182,51 +158,35 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      font-size: 1rem;
     }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .loading {
-      text-align: center;
-      padding: 2rem 0;
-    }
+    .loading { text-align: center; padding: 2.5rem 0; }
     .loading-spinner {
-      width: 36px;
-      height: 36px;
+      width: 42px;
+      height: 42px;
       border: 3px solid #ddd;
       border-top-color: #639922;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
-      margin: 0 auto 12px;
+      margin: 0 auto 16px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading p { color: #666; font-size: 0.9rem; }
+    .loading p { color: #666; font-size: 1rem; line-height: 1.7; }
 
     .result-box {
       background: #f9f7f2;
       border: 1.5px solid #ddd;
       border-radius: 10px;
-      padding: 1.2rem;
-      font-size: 0.95rem;
-      line-height: 1.9;
+      padding: 1.3rem;
+      font-size: 1rem;
+      line-height: 2;
       color: #333;
-      margin-bottom: 1.2rem;
+      margin-bottom: 1.3rem;
       white-space: pre-wrap;
     }
-    .result-note {
-      font-size: 0.8rem;
-      color: #888;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .copied-msg {
-      text-align: center;
-      color: #639922;
-      font-size: 0.85rem;
-      margin-top: 8px;
-      min-height: 20px;
-    }
+    .result-note { font-size: 0.85rem; color: #888; text-align: center; margin-bottom: 1rem; }
+    .copied-msg { text-align: center; color: #639922; font-size: 0.9rem; margin-top: 8px; min-height: 22px; }
 
     .error-box {
       background: #fff0f0;
@@ -234,9 +194,10 @@
       border-radius: 8px;
       padding: 1rem;
       color: #c0392b;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       margin-bottom: 1rem;
-      line-height: 1.5;
+      line-height: 1.6;
+      white-space: pre-wrap;
     }
 
     .screen { display: none; }
@@ -247,7 +208,7 @@
 
 <header>
   <h1>思い出を文章にする</h1>
-  <p>〇〇公民館 閉館記念</p>
+  <p></p>
 </header>
 
 <div class="step-bar" id="stepBar">
@@ -262,17 +223,13 @@
       <p class="q-number" id="qNumber">質問 1 / 5</p>
       <p class="q-text"   id="qText"></p>
       <p class="q-hint"   id="qHint"></p>
-
       <div class="textarea-wrap">
         <textarea id="qAnswer" placeholder=""></textarea>
-        <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="マイクで話す">
-          🎤
-        </button>
+        <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="マイクで話す">🎤</button>
       </div>
       <p class="voice-status idle" id="voiceStatus">🎤 マイクボタンで話して入力できます</p>
       <p class="voice-unsupported" id="voiceUnsupported">※ このブラウザは音声入力に対応していません</p>
     </div>
-
     <button class="btn btn-primary" id="btnNext" onclick="nextStep()">次へ →</button>
     <button class="btn btn-secondary" id="btnPrev" onclick="prevStep()" style="display:none">← 前に戻る</button>
   </div>
@@ -283,7 +240,7 @@
       <div class="loading">
         <div class="loading-spinner"></div>
         <p>Claudeがあなたの思い出を<br>文章にしています…</p>
-        <p style="font-size:0.8rem;color:#aaa;margin-top:8px;">しばらくお待ちください</p>
+        <p style="font-size:0.85rem;color:#aaa;margin-top:10px;">しばらくお待ちください</p>
       </div>
     </div>
   </div>
@@ -295,14 +252,10 @@
       <p class="q-hint">以下の文章をコピーして、担当者にお送りください。</p>
       <div class="result-box" id="resultText"></div>
       <p class="result-note">※ 内容を修正したい場合は担当者にご相談ください</p>
-      <button class="btn btn-copy" onclick="copyText()">
-        📋 文章をコピーする
-      </button>
+      <button class="btn btn-copy" onclick="copyText()">📋 文章をコピーする</button>
       <p class="copied-msg" id="copiedMsg"></p>
     </div>
-    <button class="btn btn-secondary" onclick="restart()" style="margin-top:10px">
-      🔄 最初からやり直す
-    </button>
+    <button class="btn btn-secondary" onclick="restart()" style="margin-top:10px">🔄 最初からやり直す</button>
   </div>
 
   <!-- エラー -->
@@ -317,6 +270,10 @@
 </div>
 
 <script>
+// ================================================
+// ★ GASのWebアプリURLをここに貼り付けてください
+// ================================================
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwlC6WN43guKap5BR-1_1PeIHAaYy2gCBxEmmbweF71UhtXHDCzx0bxnGsyRJ2JUx2i/exec";
 
 // ================================================
 // 質問リスト
@@ -356,16 +313,16 @@ let currentStep = 0;
 const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
 
 // ================================================
-// 音声入力（Web Speech API）
+// 音声入力（待機時間を2倍に延長）
 // ================================================
 let recognition = null;
 let isListening = false;
+let silenceTimer = null;
+const SILENCE_TIMEOUT = 6000; // 無音検知タイムアウト（通常の約2倍）
 
 function initVoice() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
   if (!SpeechRecognition) {
-    // 非対応ブラウザの場合
     document.getElementById("micBtn").classList.add("unsupported");
     document.getElementById("micBtn").disabled = true;
     document.getElementById("voiceStatus").style.display = "none";
@@ -375,23 +332,21 @@ function initVoice() {
 
   recognition = new SpeechRecognition();
   recognition.lang = "ja-JP";
-  recognition.interimResults = true;  // 認識途中の結果も取得
-  recognition.continuous = false;     // 一区切りで自動停止
+  recognition.interimResults = true;
+  recognition.continuous = true; // 自動停止せず話し続けられる
 
-  // 認識中：テキストを随時更新
   recognition.onresult = function(event) {
+    // 話している間はタイマーをリセット（無音検知を延長）
+    clearTimeout(silenceTimer);
+
     let interim = "";
     let final = "";
     for (let i = event.resultIndex; i < event.results.length; i++) {
       const transcript = event.results[i][0].transcript;
-      if (event.results[i].isFinal) {
-        final += transcript;
-      } else {
-        interim += transcript;
-      }
+      if (event.results[i].isFinal) { final += transcript; }
+      else { interim += transcript; }
     }
     const textarea = document.getElementById("qAnswer");
-    // 確定済みテキストを追記（既存テキストの末尾に）
     if (final) {
       const existing = textarea.value;
       textarea.value = existing + (existing && !existing.endsWith("\n") ? "\n" : "") + final;
@@ -399,10 +354,15 @@ function initVoice() {
     if (interim) {
       document.getElementById("voiceStatus").textContent = "🎤 認識中：" + interim;
     }
+
+    // 話し終わったあと SILENCE_TIMEOUT 後に自動停止
+    silenceTimer = setTimeout(() => {
+      if (isListening) recognition.stop();
+    }, SILENCE_TIMEOUT);
   };
 
-  // 認識終了
   recognition.onend = function() {
+    clearTimeout(silenceTimer);
     isListening = false;
     document.getElementById("micBtn").classList.remove("recording");
     document.getElementById("qAnswer").classList.remove("listening");
@@ -411,13 +371,12 @@ function initVoice() {
     document.getElementById("micBtn").textContent = "🎤";
   };
 
-  // エラー処理
   recognition.onerror = function(event) {
+    clearTimeout(silenceTimer);
     isListening = false;
     document.getElementById("micBtn").classList.remove("recording");
     document.getElementById("qAnswer").classList.remove("listening");
     document.getElementById("micBtn").textContent = "🎤";
-
     let msg = "🎤 マイクボタンで話して入力できます";
     if (event.error === "not-allowed") {
       msg = "⚠️ マイクの使用が許可されていません。ブラウザの設定をご確認ください";
@@ -429,16 +388,13 @@ function initVoice() {
   };
 }
 
-// マイクボタンのON/OFF切り替え
 function toggleVoice() {
   if (!recognition) return;
-
   if (isListening) {
-    // 録音停止
+    clearTimeout(silenceTimer);
     recognition.stop();
     isListening = false;
   } else {
-    // 録音開始
     try {
       recognition.start();
       isListening = true;
@@ -447,6 +403,11 @@ function toggleVoice() {
       document.getElementById("qAnswer").classList.add("listening");
       document.getElementById("voiceStatus").textContent = "🔴 録音中…話してください（終わったらボタンを押す）";
       document.getElementById("voiceStatus").className = "voice-status";
+
+      // 最初の無音タイマーをセット
+      silenceTimer = setTimeout(() => {
+        if (isListening) recognition.stop();
+      }, SILENCE_TIMEOUT);
     } catch(e) {
       document.getElementById("voiceStatus").textContent = "エラーが発生しました。再度お試しください";
     }
@@ -462,19 +423,15 @@ window.onload = function() {
 };
 
 function showQuestion(index) {
-  // 録音中なら停止
-  if (isListening && recognition) recognition.stop();
-
+  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
   const q = QUESTIONS[index];
   document.getElementById("qNumber").textContent  = `質問 ${index + 1} / ${QUESTIONS.length}`;
   document.getElementById("qText").textContent    = q.text;
   document.getElementById("qHint").textContent    = q.hint;
   document.getElementById("qAnswer").placeholder  = q.placeholder;
   document.getElementById("qAnswer").value        = answers[`q${index + 1}`] || "";
-
   document.getElementById("btnPrev").style.display = index > 0 ? "block" : "none";
   document.getElementById("btnNext").textContent   = index === QUESTIONS.length - 1 ? "文章を作る ✨" : "次へ →";
-
   updateStepBar(index);
   showScreen("screen-questions");
 }
@@ -487,7 +444,7 @@ function updateStepBar(activeIndex) {
 }
 
 function nextStep() {
-  if (isListening && recognition) recognition.stop();
+  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
   answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
   if (currentStep === QUESTIONS.length - 1) {
     generateText();
@@ -498,34 +455,34 @@ function nextStep() {
 }
 
 function prevStep() {
-  if (isListening && recognition) recognition.stop();
+  if (isListening && recognition) { clearTimeout(silenceTimer); recognition.stop(); }
   answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
   currentStep--;
   showQuestion(currentStep);
 }
 
 // ================================================
-// 文章生成（google.script.run を使う版）
+// 文章生成（fetch でGASを呼ぶ）
 // ================================================
-function generateText() {
+async function generateText() {
   showScreen("screen-loading");
-
-  google.script.run
-    .withSuccessHandler(function(result) {
-      if (result.error) {
-        document.getElementById("errorMsg").textContent = result.error;
-        showScreen("screen-error");
-      } else {
-        document.getElementById("resultText").textContent = result.text;
-        showScreen("screen-result");
-      }
-    })
-    .withFailureHandler(function(err) {
-      document.getElementById("errorMsg").textContent =
-        "エラーが発生しました。\n" + err.message + "\n\n時間をおいてもう一度お試しください。";
-      showScreen("screen-error");
-    })
-    .generateFromAnswers(answers);  // コード.gs の関数を直接呼ぶ
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ answers }),
+      redirect: "follow"
+    });
+    if (!response.ok) throw new Error(`通信エラー（${response.status}）`);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
+    document.getElementById("resultText").textContent = data.text;
+    showScreen("screen-result");
+  } catch (err) {
+    document.getElementById("errorMsg").textContent =
+      `エラーが発生しました。\n${err.message}\n\n時間をおいてもう一度お試しください。`;
+    showScreen("screen-error");
+  }
 }
 
 // ================================================
@@ -563,3 +520,4 @@ function showScreen(id) {
 
 </body>
 </html>
+
