@@ -71,7 +71,7 @@
     }
     .q-hint {
       font-size: 0.88rem;
-      color: #999;
+      color: #666;
       margin-bottom: 14px;
       line-height: 1.55;
     }
@@ -92,13 +92,14 @@
       -webkit-appearance: none;
     }
     textarea:focus { outline: none; border-color: #639922; }
-    textarea::placeholder { color: #bbb; font-size: 0.95rem; }
+    textarea::placeholder { color: #999; font-size: 0.95rem; }
 
     .mic-hint {
-      font-size: 0.82rem;
-      color: #aaa;
-      margin-top: 8px;
-      text-align: right;
+      font-size: 0.88rem;
+      color: #555;
+      font-weight: bold;
+      margin-top: 10px;
+      text-align: center;
       line-height: 1.4;
     }
 
@@ -172,10 +173,10 @@
       line-height: 1.5;
     }
     .improve-examples {
-      font-size: 0.85rem;
-      color: #999;
+      font-size: 0.92rem;
+      color: #555;
       margin-bottom: 14px;
-      line-height: 1.7;
+      line-height: 1.9;
     }
 
     /* エラー */
@@ -262,10 +263,10 @@
       <p class="improve-label">どのように直しますか？<br>思ったことを自由に書いてください</p>
       <p class="improve-examples">
         例）<br>
-        ・もう少し短くしてほしい<br>
-        ・料理教室のことをもっと詳しく書いて<br>
-        ・やわらかい雰囲気にしてほしい<br>
-        ・最後をもっと明るい感じにしたい
+        ・もっと個性的な文章にして<br>
+        ・もっと面白い文章にして<br>
+        ・エピソード（思い出）を追加します<br>
+        ・この部分をこの文章に置き換えて
       </p>
       <textarea id="improveInput" rows="4" placeholder="ここに書いてください"></textarea>
       <p class="mic-hint">📱 キーボードのマイクボタンで話して入力できます</p>
@@ -300,7 +301,7 @@
 // ================================================
 // ★ GASのWebアプリURLをここに貼り付けてください
 // ================================================
-const GAS_URL = "https://script.google.com/macros/s/AKfycbxOVNRyD11JkcB7jBvC6l5QsH0volsi8JPTOb0ir0RZcjQjJ2yvMkZ_I5-Dd-lJ5go/exec";
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxtD-EO3hmHE5tLV8F2N6N7nn5Sb6Ksr_2E9bgO_sm4Pfbr1MHqKyxoOn4kqzQKADtl/exec";
 
 // ================================================
 // 質問リスト
@@ -313,12 +314,12 @@ const QUESTIONS = [
   },
   {
     text: "公民館でどんな活動や行事に参加しましたか？",
-    hint: "例）料理教室、囲碁サークル、子どものお遊戯会、防災訓練　など",
+    hint: "例）各種サークル、健康づくり、親子体験、教養講座　など",
     placeholder: "参加した活動をいくつでも書いてください"
   },
   {
     text: "公民館で出会った人や、印象に残っているエピソードはありますか？",
-    hint: "例）長年一緒だったサークルの仲間　／　職員の方との思い出",
+    hint: "例）仲間と過ごした思い出の場所　／　地域のつながりを感じられる場所",
     placeholder: "印象深い人やエピソードを書いてください"
   },
   {
@@ -392,6 +393,11 @@ function prevStep() {
 // 文章生成（初回）
 // ================================================
 async function generateText() {
+  // 全問未入力の場合はデフォルトメッセージをセット
+  const allEmpty = Object.values(answers).every(v => !v);
+  if (allEmpty) {
+    answers.q1 = "（お答えいただけませんでした）";
+  }
   showScreen("screen-loading");
   try {
     const response = await fetch(GAS_URL, {
@@ -506,5 +512,3 @@ function showScreen(id) {
 </script>
 </body>
 </html>
-
-
