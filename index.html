@@ -1,615 +1,508 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>思い出を文章に</title>
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        body {
-            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
-            background: #f5f5f0;
-            color: #333;
-            min-height: 100vh;
-            font-size: 18px; /* シニア向けに基本文字を大きめに保持 */
-        }
-        header {
-            background: #3B6D11;
-            color: #EAF3DE;
-            padding: 1.3rem 1.5rem;
-            text-align: center;
-        }
-        header h1 {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        header p {
-            font-size: 0.9rem;
-            color: #C0DD97;
-        }
-        .step-bar {
-            display: flex;
-            gap: 5px;
-            padding: 12px 1.5rem;
-            background: #fff;
-            border-bottom: 1px solid #e0e0e0;
-        }
-        .step-bar span {
-            flex: 1;
-            height: 8px; /* 少し太くして見やすく */
-            border-radius: 4px;
-            background: #ddd;
-            transition: background 0.3s;
-        }
-        .step-bar span.done {
-            background: #639922;
-        }
-        .step-bar span.active {
-            background: #97C459;
-        }
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 1.5rem 1.2rem 4rem;
-        }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            margin-bottom: 1.5rem;
-        }
-        .q-number {
-            font-size: 0.95rem;
-            color: #639922;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .q-text {
-            font-size: 1.2rem;
-            font-weight: bold;
-            line-height: 1.6;
-            margin-bottom: 10px;
-            color: #222;
-        }
-        .q-hint {
-            font-size: 0.95rem;
-            color: #666;
-            margin-bottom: 16px;
-            line-height: 1.6;
-            background: #f9f9f5;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        .textarea-wrap {
-            position: relative;
-            margin-bottom: 12px;
-        }
-        textarea {
-            width: 100%;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            padding: 14px;
-            font-size: 1.1rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 140px;
-            line-height: 1.7;
-            color: #333;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-        textarea:focus {
-            outline: none;
-            border-color: #639922;
-        }
-        textarea::placeholder {
-            color: #aaa;
-        }
-        /* 聞き取り中：落ち着いたエンジ系 */
-        textarea.listening {
-            border-color: #8A2323;
-            background: #FAF0F0;
-        }
-        
-        .mic-container {
-            display: flex;
-            justify-content: center;
-            margin-top: 5px;
-            margin-bottom: 15px;
-        }
-        .mic-btn {
-            width: 100%;
-            max-width: 280px;
-            padding: 12px;
-            border-radius: 30px;
-            border: none;
-            background: #639922;
-            color: #fff;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-            transition: background 0.2s, transform 0.1s;
-        }
-        .mic-btn:active {
-            transform: scale(0.98);
-        }
-        /* ボタン動作中：落ち着いたエンジ色 */
-        .mic-btn.recording {
-            background: #8A2323;
-            animation: pulse-engie 1.5s ease-in-out infinite;
-        }
-        .mic-btn.unsupported {
-            background: #bbb;
-            cursor: not-allowed;
-        }
-        @keyframes pulse-engie {
-            0%   { box-shadow: 0 0 0 0 rgba(138,35,35,0.4); }
-            70%  { box-shadow: 0 0 0 14px rgba(138,35,35,0); }
-            100% { box-shadow: 0 0 0 0 rgba(138,35,35,0); }
-        }
-        
-        .voice-status {
-            font-size: 0.95rem;
-            color: #8A2323; /* 文字もエンジ色に統一 */
-            margin-top: 8px;
-            min-height: 48px;
-            text-align: center;
-            font-weight: bold;
-            line-height: 1.6;
-        }
-        .voice-status.idle {
-            color: #777;
-            font-weight: normal;
-        }
-        .voice-unsupported {
-            font-size: 0.9rem;
-            color: #8A2323;
-            margin-top: 8px;
-            text-align: center;
-            display: none;
-        }
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.15rem;
-            font-family: inherit;
-            font-weight: bold;
-            cursor: pointer;
-            transition: opacity 0.2s, transform 0.1s;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .btn:active {
-            transform: scale(0.98);
-        }
-        .btn-primary {
-            background: #3B6D11;
-            color: #fff;
-        }
-        .btn-primary:hover {
-            opacity: 0.9;
-        }
-        .btn-secondary {
-            background: #fff;
-            color: #555;
-            border: 2px solid #ccc;
-        }
-        .btn-print {
-            background: #24440a;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .loading {
-            text-align: center;
-            padding: 2.5rem 0;
-        }
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #ddd;
-            border-top-color: #639922;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .loading p {
-            color: #333;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            font-weight: bold;
-        }
-        .result-box {
-            background: #f9f7f2;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            padding: 1.5rem;
-            font-size: 1.15rem;
-            line-height: 2.1;
-            color: #222;
-            margin-bottom: 1.5rem;
-            white-space: pre-wrap;
-        }
-        .copied-msg {
-            text-align: center;
-            color: #3B6D11;
-            font-size: 1rem;
-            font-weight: bold;
-            margin-bottom: 12px;
-            min-height: 24px;
-        }
-        .error-box {
-            background: #fff0f0;
-            border: 2px solid #f5c6c6;
-            border-radius: 8px;
-            padding: 1.2rem;
-            color: #c0392b;
-            font-size: 1rem;
-            margin-bottom: 1.5rem;
-            line-height: 1.7;
-            white-space: pre-wrap;
-        }
-        .screen {
-            display: none;
-        }
-        .screen.active {
-            display: block;
-        }
-        
-        @media print {
-            header, .step-bar, .btn, .copied-msg, .q-number { display: none !important; }
-            body { background: #fff; font-size: 16pt; }
-            .container { padding: 0; max-width: 100%; }
-            .card { box-shadow: none; padding: 0; }
-            .result-box { border: none; background: #fff; font-size: 16pt; line-height: 2.4; padding: 0; }
-            #screen-result { display: block !important; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>思い出を文章に</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+      background: #f0f0eb;
+      color: #222;
+      font-size: 20px;
+      /* キーボードが出ても画面が縮まないよう固定 */
+      min-height: 100vh;
+    }
+
+    header {
+      background: #3B6D11;
+      color: #EAF3DE;
+      padding: 1rem 1.2rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header h1 { font-size: 1.15rem; font-weight: bold; }
+
+    /* ステップバー */
+    .step-bar {
+      display: flex;
+      gap: 5px;
+      padding: 10px 1.2rem;
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+    }
+    .step-bar span {
+      flex: 1; height: 7px; border-radius: 4px; background: #ddd;
+      transition: background 0.3s;
+    }
+    .step-bar span.done   { background: #639922; }
+    .step-bar span.active { background: #97C459; }
+
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 1.2rem 1rem 6rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.4rem 1.2rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 1rem;
+    }
+
+    .q-number {
+      font-size: 0.85rem;
+      color: #639922;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    .q-text {
+      font-size: 1.15rem;
+      font-weight: bold;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      color: #111;
+    }
+    .q-hint {
+      font-size: 0.88rem;
+      color: #999;
+      margin-bottom: 14px;
+      line-height: 1.55;
+    }
+
+    /* テキストエリア：OS標準マイク使用前提でシンプルに */
+    textarea {
+      width: 100%;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 1.05rem;
+      font-family: inherit;
+      resize: none;
+      min-height: 130px;
+      line-height: 1.75;
+      color: #222;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+    }
+    textarea:focus { outline: none; border-color: #639922; }
+    textarea::placeholder { color: #bbb; font-size: 0.95rem; }
+
+    .mic-hint {
+      font-size: 0.82rem;
+      color: #aaa;
+      margin-top: 8px;
+      text-align: right;
+      line-height: 1.4;
+    }
+
+    /* ボタン：大きく・押しやすく */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 18px 12px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      font-family: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+      margin-bottom: 12px;
+      letter-spacing: 0.03em;
+    }
+    .btn:active { transform: scale(0.97); opacity: 0.85; }
+    .btn-primary   { background: #639922; color: #fff; }
+    .btn-secondary { background: #fff; color: #555; border: 2px solid #ccc; }
+    .btn-print     { background: #3B6D11; color: #fff; }
+    .btn-improve   { background: #e67e22; color: #fff; }
+    .btn:disabled  { opacity: 0.4; cursor: not-allowed; }
+
+    /* ローディング */
+    .loading { text-align: center; padding: 3rem 0; }
+    .loading-spinner {
+      width: 48px; height: 48px;
+      border: 4px solid #ddd;
+      border-top-color: #639922;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 18px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading p { color: #666; font-size: 1rem; line-height: 1.8; }
+
+    /* 結果表示 */
+    .result-label {
+      font-size: 0.85rem;
+      color: #639922;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
+    .result-box {
+      background: #f9f7f2;
+      border: 2px solid #e0dbd0;
+      border-radius: 10px;
+      padding: 1.2rem;
+      font-size: 1rem;
+      line-height: 2.1;
+      color: #222;
+      margin-bottom: 1.2rem;
+      white-space: pre-wrap;
+    }
+    .copied-msg {
+      text-align: center;
+      color: #639922;
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      min-height: 22px;
+    }
+
+    /* 文章改善画面 */
+    .improve-label {
+      font-size: 1rem;
+      font-weight: bold;
+      color: #222;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .improve-examples {
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 14px;
+      line-height: 1.7;
+    }
+
+    /* エラー */
+    .error-box {
+      background: #fff0f0;
+      border: 1px solid #f5c6c6;
+      border-radius: 10px;
+      padding: 1rem;
+      color: #c0392b;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* 印刷 */
+    @media print {
+      header, .step-bar, .btn, .copied-msg, .result-label { display: none !important; }
+      body { background: #fff; font-size: 13pt; }
+      .container { padding: 0; max-width: 100%; }
+      .card { box-shadow: none; padding: 0; border: none; }
+      .result-box {
+        border: none; background: #fff;
+        font-size: 13pt; line-height: 2.2; padding: 0;
+      }
+      #screen-result { display: block !important; }
+    }
+  </style>
 </head>
 <body>
 
-    <header>
-        <h1>思い出を文章に</h1>
-        <p>質問にこたえると、AIが素敵な文章を作ります</p>
-    </header>
+<header>
+  <h1>思い出を文章に</h1>
+</header>
 
-    <div class="step-bar" id="stepBar">
-        <span></span><span></span><span></span><span></span><span></span>
+<div class="step-bar" id="stepBar">
+  <span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="container">
+
+  <!-- ===== 質問画面 ===== -->
+  <div id="screen-questions" class="screen active">
+    <div class="card">
+      <p class="q-number" id="qNumber">質問 1 / 5</p>
+      <p class="q-text"   id="qText"></p>
+      <p class="q-hint"   id="qHint"></p>
+      <textarea id="qAnswer" rows="5" placeholder=""></textarea>
+      <p class="mic-hint">📱 キーボードのマイクボタンで話して入力できます</p>
     </div>
+    <button class="btn btn-primary"   id="btnNext" onclick="nextStep()">次へ →</button>
+    <button class="btn btn-secondary" id="btnPrev" onclick="prevStep()" style="display:none">← 前に戻る</button>
+  </div>
 
-    <div class="container">
-        <div id="screen-questions" class="screen active">
-            <div class="card">
-                <p class="q-number" id="qNumber">質問 1 / 5</p>
-                <p class="q-text" id="qText"></p>
-                <p class="q-hint" id="qHint"></p>
-                
-                <div class="textarea-wrap">
-                    <textarea id="qAnswer" placeholder=""></textarea>
-                </div>
-                
-                <div class="mic-container">
-                    <button class="mic-btn" id="micBtn" onclick="toggleVoice()" title="マイクで話す">
-                        <span id="micIcon">🎤</span> <span id="micText">声で入力する</span>
-                    </button>
-                </div>
-                
-                <p class="voice-status idle" id="voiceStatus">上のボタンを押すと、声で入力できます</p>
-                <p class="voice-unsupported" id="voiceUnsupported">※お使いのスマホは音声入力に対応していません</p>
-            </div>
-
-            <button class="btn btn-primary" id="btnNext" onclick="nextStep()">次へ進む →</button>
-            <button class="btn btn-secondary" id="btnPrev" onclick="prevStep()" style="display:none">← 前の質問に戻る</button>
-        </div>
-
-        <div id="screen-loading" class="screen">
-            <div class="card">
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <p>AIがあなたの大切な思い出を<br>ひとつの文章にまとめています…</p>
-                    <p style="font-size:0.95rem; color:#666; margin-top:15px; font-weight:normal;">
-                        じっくり丁寧につくっています。<br>このまま15秒ほどお待ちください。
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div id="screen-result" class="screen">
-            <div class="card">
-                <p class="q-number" style="margin-bottom:10px">✨ 素敵な文章ができあがりました！</p>
-                <div class="result-box" id="resultText"></div>
-                <p class="copied-msg" id="copiedMsg"></p>
-                <button class="btn btn-print" onclick="printText()">🖨️ 紙に印刷する</button>
-            </div>
-            <button class="btn btn-secondary" onclick="restart()" style="margin-top:10px">🔄 もういちど最初からやる</button>
-        </div>
-
-        <div id="screen-error" class="screen">
-            <div class="card">
-                <p class="q-number" style="color:#c0392b">⚠️ うまくつなげませんでした</p>
-                <div class="error-box" id="errorMsg"></div>
-                <button class="btn btn-secondary" onclick="restart()">最初からやり直す</button>
-            </div>
-        </div>
+  <!-- ===== 生成中 ===== -->
+  <div id="screen-loading" class="screen">
+    <div class="card">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>あなたの思い出を<br>文章にしています…</p>
+        <p style="font-size:0.85rem;color:#bbb;margin-top:12px;">しばらくお待ちください</p>
+      </div>
     </div>
+  </div>
+
+  <!-- ===== 結果 ===== -->
+  <div id="screen-result" class="screen">
+    <div class="card">
+      <p class="result-label">✅ 文章ができました</p>
+      <div class="result-box" id="resultText"></div>
+      <p class="copied-msg"  id="copiedMsg"></p>
+      <button class="btn btn-print"   onclick="printText()">🖨️ 印刷する</button>
+      <button class="btn btn-improve" onclick="showImprove()">✏️ この文章をもっと良くしたい</button>
+    </div>
+    <button class="btn btn-secondary" onclick="restart()" style="margin-top:4px">🔄 最初からやり直す</button>
+  </div>
+
+  <!-- ===== 文章改善画面 ===== -->
+  <div id="screen-improve" class="screen">
+    <div class="card">
+      <p class="improve-label">どのように直しますか？<br>思ったことを自由に書いてください</p>
+      <p class="improve-examples">
+        例）<br>
+        ・もう少し短くしてほしい<br>
+        ・料理教室のことをもっと詳しく書いて<br>
+        ・やわらかい雰囲気にしてほしい<br>
+        ・最後をもっと明るい感じにしたい
+      </p>
+      <textarea id="improveInput" rows="4" placeholder="ここに書いてください"></textarea>
+      <p class="mic-hint">📱 キーボードのマイクボタンで話して入力できます</p>
+    </div>
+    <button class="btn btn-primary"   onclick="refineText()">✨ 書き直してもらう</button>
+    <button class="btn btn-secondary" onclick="showScreen('screen-result')">← 文章に戻る</button>
+  </div>
+
+  <!-- ===== 改善生成中 ===== -->
+  <div id="screen-refining" class="screen">
+    <div class="card">
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <p>文章を書き直しています…</p>
+        <p style="font-size:0.85rem;color:#bbb;margin-top:12px;">しばらくお待ちください</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== エラー ===== -->
+  <div id="screen-error" class="screen">
+    <div class="card">
+      <p class="result-label" style="color:#c0392b">⚠️ エラーが発生しました</p>
+      <div class="error-box" id="errorMsg"></div>
+      <button class="btn btn-secondary" onclick="restart()">最初からやり直す</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
 
 <script>
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwo8z92UbO1bGA9-b1rhqjy_ktRPtDZtFdZg1f9p-_ZCKelj-1xJohx-vXzRvZyxKDh/exec";
+// ================================================
+// ★ GASのWebアプリURLをここに貼り付けてください
+// ================================================
+const GAS_URL = "https://script.google.com/macros/s/AKfycbxOVNRyD11JkcB7jBvC6l5QsH0volsi8JPTOb0ir0RZcjQjJ2yvMkZ_I5-Dd-lJ5go/exec";
 
-    const QUESTIONS = [
-        { text: "公民館を使い始めたのはいつ頃ですか？また、きっかけは何でしたか？", hint: "ヒント：子どもが小さい頃から／友人に誘われて料理教室に参加したのが始まり、など", placeholder: "いつ頃のことや、きっかけを教えてください（おしゃべりするように話せばOKです）" },
-        { text: "公民館でどんな活動や行事に参加しましたか？", hint: "ヒント：料理教室、囲碁サークル、子どものお遊戯会、防災訓練など", placeholder: "覚えている活動をいくつでも教えてください" },
-        { text: "公民館で出会った人や、印象に残っているエピソードはありますか？", hint: "ヒント：長年一緒だったサークルの仲間、職員の方との思い出など", placeholder: "楽しかった思い出や、心に残っている出来事を教えてください" },
-        { text: "公民館はあなたにとってどんな場所でしたか？", hint: "ヒント：第二の我が家のような場所、地域のつながりを感じられる場所など", placeholder: "あなたにとっての公民館への思いを教えてください" },
-        { text: "公民館へのメッセージ、または地域の未来へのひとことをお願いします。", hint: "ヒント：長い間ありがとう、これからも地域のきずなを大切に、など", placeholder: "感謝の気持ちや、これからの地域への願いを自由にどうぞ" }
-    ];
+// ================================================
+// 質問リスト
+// ================================================
+const QUESTIONS = [
+  {
+    text: "公民館を使い始めたのはいつ頃ですか？また、きっかけは何でしたか？",
+    hint: "例）子どもが小さい頃から　／　友人に誘われて料理教室に参加したのが始まりです",
+    placeholder: "いつ頃・きっかけを書いてください（箇条書きでもOK）"
+  },
+  {
+    text: "公民館でどんな活動や行事に参加しましたか？",
+    hint: "例）料理教室、囲碁サークル、子どものお遊戯会、防災訓練　など",
+    placeholder: "参加した活動をいくつでも書いてください"
+  },
+  {
+    text: "公民館で出会った人や、印象に残っているエピソードはありますか？",
+    hint: "例）長年一緒だったサークルの仲間　／　職員の方との思い出",
+    placeholder: "印象深い人やエピソードを書いてください"
+  },
+  {
+    text: "公民館はあなたにとってどんな場所でしたか？",
+    hint: "例）第二の我が家のような場所　／　地域のつながりを感じられる場所",
+    placeholder: "あなたにとっての公民館を書いてください"
+  },
+  {
+    text: "公民館へのメッセージ、または地域の未来へのひとことをお願いします。",
+    hint: "例）長い間ありがとう　／　これからも地域のきずなを大切に",
+    placeholder: "感謝の言葉や未来へのメッセージを自由に"
+  }
+];
 
-    let currentStep = 0;
-    const answers = { q1: "", q2: "", q3: "", q4: "", q5: "" };
+// ================================================
+// 状態管理
+// ================================================
+let currentStep = 0;
+const answers = { q1:"", q2:"", q3:"", q4:"", q5:"" };
+let currentGeneratedText = ""; // 現在生成されている文章
 
-    // ================================================ //
-    // 音声入力（完全後出し一括反映方式）
-    // ================================================ //
-    let recognition = null;
-    let isListening = false;
-    let silenceTimer = null;
-    const SILENCE_TIMEOUT = 5000;
+// ================================================
+// 初期化
+// ================================================
+window.onload = function() {
+  showQuestion(0);
+};
 
-    let finalSessionText = ""; // 録音中に確定したテキストを溜める
+// ================================================
+// 質問画面
+// ================================================
+function showQuestion(index) {
+  const q = QUESTIONS[index];
+  document.getElementById("qNumber").textContent = `質問 ${index + 1} / ${QUESTIONS.length}`;
+  document.getElementById("qText").textContent   = q.text;
+  document.getElementById("qHint").textContent   = q.hint;
+  const ta = document.getElementById("qAnswer");
+  ta.placeholder = q.placeholder;
+  ta.value       = answers[`q${index + 1}`] || "";
+  document.getElementById("btnPrev").style.display = index > 0 ? "block" : "none";
+  document.getElementById("btnNext").textContent   = index === QUESTIONS.length - 1 ? "文章を作る ✨" : "次へ →";
+  updateStepBar(index);
+  showScreen("screen-questions");
+  // 少し遅らせてスクロールをトップに
+  setTimeout(() => window.scrollTo(0, 0), 50);
+}
 
-    function initVoice() {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            document.getElementById("micBtn").classList.add("unsupported");
-            document.getElementById("micBtn").disabled = true;
-            document.getElementById("voiceStatus").style.display = "none";
-            document.getElementById("voiceUnsupported").style.display = "block";
-            return;
-        }
+function updateStepBar(activeIndex) {
+  document.querySelectorAll("#stepBar span").forEach((span, i) => {
+    span.className = i < activeIndex ? "done" : i === activeIndex ? "active" : "";
+  });
+}
 
-        recognition = new SpeechRecognition();
-        recognition.lang = "ja-JP";
-        recognition.interimResults = true;
-        recognition.continuous = true;
+function nextStep() {
+  answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
+  if (currentStep === QUESTIONS.length - 1) {
+    generateText();
+  } else {
+    currentStep++;
+    showQuestion(currentStep);
+  }
+}
 
-        recognition.onresult = function(event) {
-            clearTimeout(silenceTimer);
-            
-            let interimTranscript = "";
-            let currentTurnFinal = "";
+function prevStep() {
+  answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
+  currentStep--;
+  showQuestion(currentStep);
+}
 
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    currentTurnFinal += transcript;
-                } else {
-                    interimTranscript += transcript;
-                }
-            }
+// ================================================
+// 文章生成（初回）
+// ================================================
+async function generateText() {
+  showScreen("screen-loading");
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ answers }),
+      redirect: "follow"
+    });
+    if (!response.ok) throw new Error(`通信エラー（${response.status}）`);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
 
-            if (currentTurnFinal !== "") {
-                finalSessionText += currentTurnFinal;
-            }
+    currentGeneratedText = data.text;
+    showResult(currentGeneratedText);
 
-            // 【重要】文字がダブるため上の入力枠（textarea）には直接書き込まない。
-            // ボタンの下にシニアの方が安心できる「エクスキューズ文」を大きく固定表示します。
-            let showText = finalSessionText + interimTranscript;
-            if (showText.trim() !== "") {
-                document.getElementById("voiceStatus").innerHTML = 
-                    "できるだけ間をおかずに一気に話してください<br>" +
-                    "<span style='font-size:0.85rem; font-weight:normal; color:#666; display:block; margin-top:6px;'>" +
-                    "※画面に言葉がダブって表示されても、最後のAIがきれいに直します。気にせずそのまま続けて大丈夫です！</span>";
-            }
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
-            silenceTimer = setTimeout(() => {
-                if (isListening) recognition.stop();
-            }, SILENCE_TIMEOUT);
-        };
+// ================================================
+// 文章改善
+// ================================================
+function showImprove() {
+  document.getElementById("improveInput").value = "";
+  showScreen("screen-improve");
+  setTimeout(() => window.scrollTo(0, 0), 50);
+}
 
-        recognition.onend = function() {
-            clearTimeout(silenceTimer);
-            isListening = false;
+async function refineText() {
+  const request = document.getElementById("improveInput").value.trim();
+  if (!request) {
+    alert("どのように直したいか、上の欄に書いてください。");
+    return;
+  }
+  showScreen("screen-refining");
+  try {
+    const response = await fetch(GAS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        answers,
+        refine: true,
+        currentText: currentGeneratedText,
+        request: request
+      }),
+      redirect: "follow"
+    });
+    if (!response.ok) throw new Error(`通信エラー（${response.status}）`);
+    const data = await response.json();
+    if (data.error) throw new Error(data.error);
 
-            const textarea = document.getElementById("qAnswer");
-            
-            // 録音が終わった瞬間に一括反映
-            if (finalSessionText.trim() !== "") {
-                const current = textarea.value.trim();
-                textarea.value = current ? current + "\n" + finalSessionText.trim() : finalSessionText.trim();
-                document.getElementById("voiceStatus").textContent = "✅ 入力しました！手で直すこともできますよ";
-            } else {
-                document.getElementById("voiceStatus").textContent = "🎤 ボタンを押すと、声で入力できます";
-            }
+    currentGeneratedText = data.text;
+    showResult(currentGeneratedText);
 
-            // UIの初期化
-            document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("qAnswer").classList.remove("listening");
-            document.getElementById("voiceStatus").className = "voice-status idle";
-            document.getElementById("micIcon").textContent = "🎤";
-            document.getElementById("micText").textContent = "声で入力する";
-            finalSessionText = "";
-        };
+  } catch (err) {
+    showError(err.message);
+  }
+}
 
-        recognition.onerror = function(event) {
-            clearTimeout(silenceTimer);
-            isListening = false;
-            document.getElementById("micBtn").classList.remove("recording");
-            document.getElementById("qAnswer").classList.remove("listening");
-            document.getElementById("micIcon").textContent = "🎤";
-            document.getElementById("micText").textContent = "声で入力する";
-            
-            let msg = "🎤 ボタンを押すと、声で入力できます";
-            if (event.error === "not-allowed") {
-                msg = "⚠️ マイクの許可がありません。スマホの設定画面を確認してください";
-            } else if (event.error === "no-speech") {
-                msg = "声がうまく聞こえませんでした。もう一度ボタンを押してお試しください";
-            }
-            document.getElementById("voiceStatus").textContent = msg;
-            document.getElementById("voiceStatus").className = "voice-status idle";
-        };
-    }
+// ================================================
+// 結果表示（クリップボード自動コピー）
+// ================================================
+function showResult(text) {
+  document.getElementById("resultText").textContent = text;
+  // クリップボードに自動コピー
+  try {
+    navigator.clipboard.writeText(text).then(() => {
+      document.getElementById("copiedMsg").textContent = "📋 クリップボードにコピーしました";
+    }).catch(() => fallbackCopy(text));
+  } catch(e) {
+    fallbackCopy(text);
+  }
+  showScreen("screen-result");
+  setTimeout(() => window.scrollTo(0, 0), 50);
+}
 
-    function toggleVoice() {
-        if (!recognition) return;
-        if (isListening) {
-            clearTimeout(silenceTimer);
-            recognition.stop();
-        } else {
-            try {
-                finalSessionText = "";
-                recognition.start();
-                isListening = true;
-                document.getElementById("micBtn").classList.add("recording");
-                document.getElementById("micIcon").textContent = "👂";
-                document.getElementById("micText").textContent = "聞きとっています";
-                document.getElementById("qAnswer").classList.add("listening");
-                
-                // 開始時に案内を出す
-                document.getElementById("voiceStatus").innerHTML = 
-                    "できるだけ間をおかずに一気に話してください<br>" +
-                    "<span style='font-size:0.85rem; font-weight:normal; color:#666; display:block; margin-top:6px;'>" +
-                    "※画面に言葉がダブって表示されても、最後のAIがきれいに直します。気にせずそのまま続けて大丈夫です！</span>";
-                document.getElementById("voiceStatus").className = "voice-status";
-                
-                silenceTimer = setTimeout(() => {
-                    if (isListening) recognition.stop();
-                }, SILENCE_TIMEOUT);
-            } catch(e) {
-                document.getElementById("voiceStatus").textContent = "エラーが起きました。もう一度ボタンを押してください";
-            }
-        }
-    }
+function fallbackCopy(text) {
+  const el = document.createElement("textarea");
+  el.value = text;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand("copy");
+  document.body.removeChild(el);
+  document.getElementById("copiedMsg").textContent = "📋 クリップボードにコピーしました";
+}
 
-    // ================================================ //
-    // 画面・質問の制御
-    // ================================================ //
-    window.onload = function() {
-        initVoice();
-        showQuestion(0);
-    };
+// ================================================
+// 印刷・リスタート・エラー
+// ================================================
+function printText() { window.print(); }
 
-    function showQuestion(index) {
-        if (isListening && recognition) {
-            clearTimeout(silenceTimer);
-            recognition.stop();
-            isListening = false;
-        }
-        const q = QUESTIONS[index];
-        document.getElementById("qNumber").textContent  = `質問 ${index + 1} / ${QUESTIONS.length}`;
-        document.getElementById("qText").textContent    = q.text;
-        document.getElementById("qHint").textContent    = q.hint;
-        document.getElementById("qAnswer").placeholder  = q.placeholder;
-        document.getElementById("qAnswer").value        = answers[`q${index + 1}`] || "";
-        document.getElementById("btnPrev").style.display = index > 0 ? "block" : "none";
-        document.getElementById("btnNext").textContent   = index === QUESTIONS.length - 1 ? "文章をつくる ✨" : "次へ進む →";
-        updateStepBar(index);
-        showScreen("screen-questions");
-    }
+function restart() {
+  currentStep = 0;
+  currentGeneratedText = "";
+  Object.keys(answers).forEach(k => answers[k] = "");
+  showQuestion(0);
+}
 
-    function updateStepBar(activeIndex) {
-        const spans = document.querySelectorAll("#stepBar span");
-        spans.forEach((span, i) => {
-            span.className = i < activeIndex ? "done" : i === activeIndex ? "active" : "";
-        });
-    }
+function showError(msg) {
+  document.getElementById("errorMsg").textContent =
+    `エラーが発生しました。\n${msg}\n\n時間をおいてもう一度お試しください。`;
+  showScreen("screen-error");
+}
 
-    function nextStep() {
-        if (isListening && recognition) {
-            clearTimeout(silenceTimer);
-            recognition.stop();
-            isListening = false;
-        }
-        answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
-        if (currentStep === QUESTIONS.length - 1) {
-            generateText();
-        } else {
-            currentStep++;
-            showQuestion(currentStep);
-        }
-    }
-
-    function prevStep() {
-        if (isListening && recognition) {
-            clearTimeout(silenceTimer);
-            recognition.stop();
-            isListening = false;
-        }
-        answers[`q${currentStep + 1}`] = document.getElementById("qAnswer").value.trim();
-        currentStep--;
-        showQuestion(currentStep);
-    }
-
-    async function generateText() {
-        showScreen("screen-loading");
-        try {
-            const response = await fetch(GAS_URL, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain" },
-                body: JSON.stringify({ answers }),
-                redirect: "follow"
-            });
-            if (!response.ok) throw new Error(`通信エラー（${response.status}）`);
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-            const text = data.text;
-            document.getElementById("resultText").textContent = text;
-
-            try {
-                await navigator.clipboard.writeText(text);
-                document.getElementById("copiedMsg").textContent = "📋 コピーしました。そのまま別の場所に貼り付けられます";
-            } catch(e) {
-                const el = document.createElement("textarea");
-                el.value = text;
-                document.body.appendChild(el);
-                el.select();
-                document.execCommand("copy");
-                document.body.removeChild(el);
-                document.getElementById("copiedMsg").textContent = "📋 コピーしました。そのまま別の場所に貼り付けられます";
-            }
-            showScreen("screen-result");
-        } catch (err) {
-            document.getElementById("errorMsg").textContent = `エラーが発生しました。\n${err.message}\n\n通信状態の良い場所でもう一度お試しください。`;
-            showScreen("screen-error");
-        }
-    }
-
-    function printText() {
-        window.print();
-    }
-
-    function restart() {
-        currentStep = 0;
-        Object.keys(answers).forEach(k => answers[k] = "");
-        showQuestion(0);
-    }
-
-    function showScreen(id) {
-        document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
-        document.getElementById(id).classList.add("active");
-        document.getElementById("stepBar").style.display = id === "screen-questions" ? "flex" : "none";
-    }
+function showScreen(id) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  const showBar = (id === "screen-questions");
+  document.getElementById("stepBar").style.display = showBar ? "flex" : "none";
+}
 </script>
 </body>
 </html>
