@@ -491,6 +491,12 @@ function fallbackCopy(text) {
 function printText() { window.print(); }
 
 function restart() {
+  // 文章が生成されている場合は確認ダイアログを表示
+  if (currentGeneratedText) {
+    if (!confirm("作成した文章が削除されます。\n最初からやり直してよろしいですか？")) {
+      return; // キャンセルされたら何もしない
+    }
+  }
   currentStep = 0;
   currentGeneratedText = "";
   Object.keys(answers).forEach(k => answers[k] = "");
