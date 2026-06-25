@@ -255,7 +255,7 @@
       <button class="btn btn-print"   onclick="printText()">🖨️ 印刷する</button>
       <button class="btn btn-improve" onclick="showImprove()">✏️ この文章をもっと良くしたい</button>
     </div>
-    <button class="btn btn-secondary" onclick="restart()" style="margin-top:4px">🏠 スタート画面にもどる（終了）</button></button>
+    <button class="btn btn-secondary" onclick="restart()" style="margin-top:4px">🏠 スタート画面にもどる（終了）</button>
   </div>
 
   <!-- ===== 文章改善画面 ===== -->
@@ -365,8 +365,11 @@ function showQuestion(index) {
   document.getElementById("btnNext").textContent   = index === QUESTIONS.length - 1 ? "文章を作る ✨" : "次へ →";
   updateStepBar(index);
   showScreen("screen-questions");
-  // 少し遅らせてスクロールをトップに
-  setTimeout(() => window.scrollTo(0, 0), 50);
+  // 少し遅らせてスクロールをトップに＋カーソルを入力欄へ
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+    document.getElementById("qAnswer").focus();
+  }, 100);
 }
 
 function updateStepBar(activeIndex) {
@@ -426,7 +429,11 @@ async function generateText() {
 function showImprove() {
   document.getElementById("improveInput").value = "";
   showScreen("screen-improve");
-  setTimeout(() => window.scrollTo(0, 0), 50);
+  // スクロールをトップに＋カーソルを入力欄へ
+  setTimeout(() => {
+    window.scrollTo(0, 0);
+    document.getElementById("improveInput").focus();
+  }, 100);
 }
 
 async function refineText() {
@@ -495,7 +502,7 @@ function printText() { window.print(); }
 function restart() {
   // 文章が生成されている場合は確認ダイアログを表示
   if (currentGeneratedText) {
-    if (!confirm("作成した文章が削除されます。\n最初からやり直してよろしいですか？")) {
+    if (!confirm("作成した文章が削除されます。\nスタート画面にもどってよろしいですか？")) {
       return; // キャンセルされたら何もしない
     }
   }
