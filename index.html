@@ -228,8 +228,8 @@
       <p class="q-text"   id="qText"></p>
       <p class="q-hint"   id="qHint"></p>
       <textarea id="qAnswer" rows="5"
-        placeholder="← ここをクリックして入力します&#10;&#10;&#10;&#10;（例はこの下に薄く表示されています）"></textarea>
-      <p class="mic-hint">📱 キーボードのマイクボタンで話して入力できます</p>
+        placeholder="← ここをタップして入力します&#10;&#10;&#10;&#10;（例はこの下に薄く表示されています）"></textarea>
+      <p class="mic-hint">📱 マイクボタンをタップし、話して入力できます</p>
     </div>
     <button class="btn btn-primary"   id="btnNext" onclick="nextStep()">次へ →</button>
     <button class="btn btn-secondary" id="btnPrev" onclick="prevStep()" style="display:none">← 前に戻る</button>
@@ -271,7 +271,7 @@
       </p>
       <textarea id="improveInput" rows="4"
         placeholder="← ここをクリックして入力します"></textarea>
-      <p class="mic-hint">📱 キーボードのマイクボタンで話して入力できます</p>
+      <p class="mic-hint">📱 マイクボタンをタップし、話して入力できます</p>
     </div>
     <button class="btn btn-primary"   onclick="refineText()">✨ 書き直してもらう</button>
     <button class="btn btn-secondary" onclick="showScreen('screen-result')">← 文章に戻る</button>
@@ -312,7 +312,7 @@ const QUESTIONS = [
   {
     text: "公民館を使い始めたのはいつ頃ですか？また、きっかけは何でしたか？",
     hint: "例）子どもが小学生のころ ／ 友人に誘われて料理教室に参加したのが始まりです",
-    placeholder: "いつ頃・きっかけを書いてください（箇条書きでもOK）"
+    placeholder: "いつ頃、きっかけを書いてください（箇条書きでもOK）"
   },
   {
     text: "公民館でどんな活動や行事に参加しましたか？",
@@ -322,12 +322,12 @@ const QUESTIONS = [
   {
     text: "公民館で出会った人や、印象に残っているエピソードはありますか？",
     hint: "例）サークルの仲間・先生、職員さん ／ 楽しかったクリスマス会",
-    placeholder: "印象深い人やエピソードを書いてください"
+    placeholder: "あなただけの思い出をいっぱい書いてください"
   },
   {
     text: "公民館はあなたにとってどんな場所でしたか？",
     hint: "例）地域のつながりを感じられる場所 ／ 仲間と過ごした思い出の場所",
-    placeholder: "あなたにとっての公民館を書いてください"
+    placeholder: "この公民館の好きだったところを書いてもOK"
   },
   {
     text: "公民館へのメッセージ、または地域の未来へのひとことをお願いします。",
@@ -359,17 +359,13 @@ function showQuestion(index) {
   document.getElementById("qText").textContent   = q.text;
   document.getElementById("qHint").textContent   = q.hint;
   const ta = document.getElementById("qAnswer");
-  ta.placeholder = q.placeholder;
+  ta.placeholder = "← ここをタップして入力します\n\n" + q.placeholder;
   ta.value       = answers[`q${index + 1}`] || "";
   document.getElementById("btnPrev").style.display = index > 0 ? "block" : "none";
   document.getElementById("btnNext").textContent   = index === QUESTIONS.length - 1 ? "文章を作る ✨" : "次へ →";
   updateStepBar(index);
   showScreen("screen-questions");
-  // 少し遅らせてスクロールをトップに＋カーソルを入力欄へ
-  setTimeout(() => {
-    window.scrollTo(0, 0);
-    document.getElementById("qAnswer").focus();
-  }, 100);
+  setTimeout(() => window.scrollTo(0, 0), 50);
 }
 
 function updateStepBar(activeIndex) {
@@ -429,11 +425,7 @@ async function generateText() {
 function showImprove() {
   document.getElementById("improveInput").value = "";
   showScreen("screen-improve");
-  // スクロールをトップに＋カーソルを入力欄へ
-  setTimeout(() => {
-    window.scrollTo(0, 0);
-    document.getElementById("improveInput").focus();
-  }, 100);
+  setTimeout(() => window.scrollTo(0, 0), 50);
 }
 
 async function refineText() {
